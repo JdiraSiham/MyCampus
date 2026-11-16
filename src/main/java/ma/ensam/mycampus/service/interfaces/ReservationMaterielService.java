@@ -24,4 +24,5 @@ public interface ReservationMaterielService {
     ReservationMateriel refuser(Long id, Long decideurId, String motif);
 
     ReservationMateriel annuler(Long id, Long utilisateurId);
+    void annulerReservationsBloquantes(Long etudiantId);
 }

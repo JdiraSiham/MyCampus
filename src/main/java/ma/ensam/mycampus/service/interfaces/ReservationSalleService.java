@@ -27,4 +27,5 @@ public interface ReservationSalleService {
     ReservationSalle refuser(Long id, Long decideurId, String motif);
 
     ReservationSalle annuler(Long id, Long utilisateurId);
+    void annulerReservationsBloquantes(Long etudiantId);
 }

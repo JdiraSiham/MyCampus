@@ -25,4 +25,6 @@ public interface ReservationMaterielRepository extends JpaRepository<Reservation
 
     List<ReservationMateriel> findByMaterielIdAndStatutInAndDateDebutAfter(
             Long materielId, List<StatutReservation> statuts, LocalDateTime date);
+    List<ReservationMateriel> findByDemandeurIdAndStatutInAndDateFinAfter(
+            Long demandeurId, List<StatutReservation> statuts, LocalDateTime date);
 }

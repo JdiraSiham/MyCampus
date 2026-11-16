@@ -21,4 +21,6 @@ public interface ReservationSalleRepository extends JpaRepository<ReservationSal
     boolean existsBySalleIdAndStatutInAndDateDebutBeforeAndDateFinAfter(
             Long salleId, List<StatutReservation> statuts,
             LocalDateTime fin, LocalDateTime debut);
+    List<ReservationSalle> findByDemandeurIdAndStatutInAndDateFinAfter(
+            Long demandeurId, List<StatutReservation> statuts, LocalDateTime date);
 }
