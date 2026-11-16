@@ -17,4 +17,7 @@ public interface ReservationMaterielRepository extends JpaRepository<Reservation
 
     boolean existsByMaterielIdAndStatutInAndDateFinAfter(
             Long materielId, List<StatutReservation> statuts, LocalDateTime date);
+    List<ReservationMateriel> findByMaterielIdAndStatutInAndDateDebutBeforeAndDateFinAfter(
+            Long materielId, List<StatutReservation> statuts,
+            LocalDateTime fin, LocalDateTime debut);
 }
