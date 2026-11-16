@@ -10,4 +10,6 @@ public interface SalleRepository extends JpaRepository<Salle, Long> {
     boolean existsByNom(String nom);
 
     List<Salle> findByActif(boolean actif);
+
+    boolean existsByNomAndIdNot(String nom, Long id);
 }

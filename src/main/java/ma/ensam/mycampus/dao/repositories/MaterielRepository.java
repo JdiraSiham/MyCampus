@@ -10,4 +10,7 @@ public interface MaterielRepository extends JpaRepository<Materiel, Long> {
     boolean existsByReference(String reference);
 
     List<Materiel> findByActif(boolean actif);
+
+    boolean existsByReferenceAndIdNot(String reference, Long id);
+
 }
