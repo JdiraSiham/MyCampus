@@ -137,6 +137,17 @@ public class ReservationMaterielManager implements ReservationMaterielService {
         reservation.setStatut(StatutReservation.ANNULEE);
         return reservationRepository.save(reservation);
     }
+    @Override
+    public void annulerReservationsBloquantes(Long etudiantId) {
+        List<ReservationMateriel> aAnnuler = reservationRepository
+                .findByDemandeurIdAndStatutInAndDateFinAfter(
+                        etudiantId, STATUTS_BLOQUANTS, LocalDateTime.now());
+        for (ReservationMateriel reservation : aAnnuler) {
+            reservation.setStatut(StatutReservation.ANNULEE);
+            reservation.setMotif("Annulée automatiquement : compte de l'étudiant désactivé");
+        }
+        reservationRepository.saveAll(aAnnuler);
+    }
 
     // ----- méthodes privées -----
 

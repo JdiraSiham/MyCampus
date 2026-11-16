@@ -150,6 +150,17 @@ public class ReservationSalleManager implements ReservationSalleService {
         reservation.setStatut(StatutReservation.ANNULEE);
         return reservationRepository.save(reservation);
     }
+    @Override
+    public void annulerReservationsBloquantes(Long etudiantId) {
+        List<ReservationSalle> aAnnuler = reservationRepository
+                .findByDemandeurIdAndStatutInAndDateFinAfter(
+                        etudiantId, STATUTS_BLOQUANTS, LocalDateTime.now());
+        for (ReservationSalle reservation : aAnnuler) {
+            reservation.setStatut(StatutReservation.ANNULEE);
+            reservation.setMotif("Annulée automatiquement : compte de l'étudiant désactivé");
+        }
+        reservationRepository.saveAll(aAnnuler);
+    }
 
     // ----- méthodes privées -----
 
