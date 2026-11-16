@@ -5,6 +5,7 @@ import ma.ensam.mycampus.dao.entities.enums.StatutReservation;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.time.LocalDateTime;
 
 public interface ReservationSalleRepository extends JpaRepository<ReservationSalle, Long> {
 
@@ -13,4 +14,7 @@ public interface ReservationSalleRepository extends JpaRepository<ReservationSal
     List<ReservationSalle> findBySalleId(Long salleId);
 
     List<ReservationSalle> findByStatut(StatutReservation statut);
+
+    boolean existsBySalleIdAndStatutInAndDateFinAfter(
+            Long salleId, List<StatutReservation> statuts, LocalDateTime date);
 }
