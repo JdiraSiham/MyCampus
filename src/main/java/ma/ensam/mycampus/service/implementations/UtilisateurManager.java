@@ -44,6 +44,11 @@ public class UtilisateurManager implements UtilisateurService {
     }
 
     @Override
+    public Utilisateur trouverParEmail(String email) {
+        return utilisateurRepository.findByEmail(email).orElseThrow(() -> new BusinessException("Utilisateur introuvable."));
+    }
+
+    @Override
     public Utilisateur creer(Utilisateur utilisateur, String motDePasseClair) {
         verifierChampsObligatoires(utilisateur);
         if (motDePasseClair == null || motDePasseClair.isBlank()) {

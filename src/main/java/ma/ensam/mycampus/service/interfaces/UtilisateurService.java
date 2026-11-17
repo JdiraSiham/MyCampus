@@ -11,4 +11,5 @@ public interface UtilisateurService {
     void desactiver(Long id, Long adminId);
     void changerMotDePasse(Long id, String ancienMotDePasse, String nouveauMotDePasse);
     void initialiserPremierAdmin();
+    Utilisateur trouverParEmail(String email);
 }
