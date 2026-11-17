@@ -4,6 +4,8 @@ import ma.ensam.mycampus.dao.entities.Utilisateur;
 import ma.ensam.mycampus.dao.entities.enums.Role;
 import ma.ensam.mycampus.dao.repositories.UtilisateurRepository;
 import ma.ensam.mycampus.service.BusinessException;
+import ma.ensam.mycampus.service.interfaces.ReservationMaterielService;
+import ma.ensam.mycampus.service.interfaces.ReservationSalleService;
 import ma.ensam.mycampus.service.interfaces.UtilisateurService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -15,13 +17,20 @@ import java.util.List;
 @Transactional
 public class UtilisateurManager implements UtilisateurService {
 
+    private static final String EMAIL_ADMIN_INITIAL = "admin@mycampus.ma";
+    private static final String MOT_DE_PASSE_ADMIN_INITIAL = "Admin@2026";
+
     private final UtilisateurRepository utilisateurRepository;
     private final PasswordEncoder passwordEncoder;
+    private final ReservationMaterielService reservationMaterielService;
+    private final ReservationSalleService reservationSalleService;
 
     @Autowired
-    public UtilisateurManager(UtilisateurRepository utilisateurRepository, PasswordEncoder passwordEncoder) {
+    public UtilisateurManager(UtilisateurRepository utilisateurRepository, PasswordEncoder passwordEncoder, ReservationMaterielService reservationMaterielService, ReservationSalleService reservationSalleService) {
         this.utilisateurRepository = utilisateurRepository;
         this.passwordEncoder = passwordEncoder;
+        this.reservationMaterielService = reservationMaterielService;
+        this.reservationSalleService = reservationSalleService;
     }
 
     @Override
@@ -79,7 +88,11 @@ public class UtilisateurManager implements UtilisateurService {
         Utilisateur utilisateur = trouverParId(id);
         utilisateur.setActif(false);
         utilisateurRepository.save(utilisateur);
-        // TODO étape suivante : annuler les réservations bloquantes si c'est un étudiant
+
+        if (utilisateur.getRole() == Role.ETUDIANT) {
+            reservationMaterielService.annulerReservationsBloquantes(id);
+            reservationSalleService.annulerReservationsBloquantes(id);
+        }
     }
 
     @Override
@@ -93,6 +106,19 @@ public class UtilisateurManager implements UtilisateurService {
         }
         utilisateur.setMotDePasse(passwordEncoder.encode(nouveauMotDePasse));
         utilisateurRepository.save(utilisateur);
+    }
+
+    @Override
+    public void initialiserPremierAdmin() {
+        if (utilisateurRepository.existsByRole(Role.ADMIN)){
+            return;
+        }
+        Utilisateur admin = new Utilisateur();
+        admin.setNom("Administrateur");
+        admin.setPrenom("MyCampus");
+        admin.setEmail(EMAIL_ADMIN_INITIAL);
+        admin.setRole(Role.ADMIN);
+        creer(admin, MOT_DE_PASSE_ADMIN_INITIAL);
     }
 
     private void verifierChampsObligatoires(Utilisateur u) {
