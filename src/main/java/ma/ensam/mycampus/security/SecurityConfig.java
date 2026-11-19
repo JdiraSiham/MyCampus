@@ -15,12 +15,4 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    // TODO étape 5 : REMPLACER par la vraie configuration (connexion, rôles, accès par URL).
-    // Temporaire : pas de connexion pendant le développement des pages.
-    @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
-                .csrf(csrf -> csrf.disable());
-        return http.build();
-    }
 }
