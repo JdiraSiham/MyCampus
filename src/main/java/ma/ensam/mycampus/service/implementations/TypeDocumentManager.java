@@ -7,7 +7,9 @@ import ma.ensam.mycampus.service.interfaces.TypeDocumentService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import java.util.ArrayList;
 import java.util.List;
+import org.springframework.data.domain.Sort;
 
 @Service
 @Transactional
@@ -71,5 +73,21 @@ public class TypeDocumentManager implements TypeDocumentService {
             throw new BusinessException("Le libellé est obligatoire.");
         }
         return libelle.trim();
+    }
+
+    @Override
+    public List<TypeDocument> rechercher(String recherche) {
+        String texte = normaliser(recherche);
+        List<TypeDocument> resultat = new ArrayList<>();
+        for (TypeDocument type : typeDocumentRepository.findAll(Sort.by("libelle"))) {
+            if (texte == null || type.getLibelle().toLowerCase().contains(texte.toLowerCase())) {
+                resultat.add(type);
+            }
+        }
+        return resultat;
+    }
+
+    private String normaliser(String texte) {
+        return (texte == null || texte.isBlank()) ? null : texte.trim();
     }
 }

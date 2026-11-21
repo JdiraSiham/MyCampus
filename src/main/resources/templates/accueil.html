@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
+      layout:decorate="~{template}">
+<head>
+    <title>Accueil - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content" class="plein">
+
+    <!-- Bandeau d'accueil -->
+    <div class="hero">
+        <span class="hero-tag" sec:authorize="hasRole('ETUDIANT')">Espace étudiant</span>
+        <span class="hero-tag" sec:authorize="hasRole('GESTIONNAIRE')">Espace gestionnaire</span>
+        <span class="hero-tag" sec:authorize="hasRole('ADMIN')">Espace administration</span>
+
+        <h1>Bienvenue sur MyCampus</h1>
+        <p class="mb-3">Connecté(e) en tant que <strong sec:authentication="name"></strong></p>
+
+        <p sec:authorize="hasRole('ETUDIANT')">
+            Demandez vos documents administratifs, réservez du matériel et des salles,
+            et suivez l'état de vos demandes.
+        </p>
+        <p sec:authorize="hasRole('GESTIONNAIRE')">
+            Traitez les demandes de documents, validez les réservations et suivez
+            les pannes de matériel.
+        </p>
+        <p sec:authorize="hasRole('ADMIN')">
+            Gérez les comptes des étudiants et des gestionnaires ainsi que les types
+            de documents proposés.
+        </p>
+    </div>
+
+    <!-- ===== ÉTUDIANT ===== -->
+    <div class="row g-3" sec:authorize="hasRole('ETUDIANT')">
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/demandes}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-doc"/></svg></span>
+                <span class="tile-title">Mes demandes</span>
+                <span class="tile-text">Suivez l'avancement de vos demandes de documents.</span>
+                <span class="tile-link">Accéder &rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/demandes/nouvelle}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-plus"/></svg></span>
+                <span class="tile-title">Nouvelle demande</span>
+                <span class="tile-text">Demandez une attestation, un relevé ou un autre document.</span>
+                <span class="tile-link">Déposer &rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/materiels}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-laptop"/></svg></span>
+                <span class="tile-title">Matériel</span>
+                <span class="tile-text">Consultez le matériel disponible et réservez-le.</span>
+                <span class="tile-link">Consulter &rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/reservations-materiel}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-calendar"/></svg></span>
+                <span class="tile-title">Mes réservations de matériel</span>
+                <span class="tile-text">Retrouvez et annulez vos réservations à venir.</span>
+                <span class="tile-link">Accéder &rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/salles}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-room"/></svg></span>
+                <span class="tile-title">Salles</span>
+                <span class="tile-text">Recherchez une salle libre sur une période et réservez-la.</span>
+                <span class="tile-link">Rechercher &rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/reservations-salle}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-calendar"/></svg></span>
+                <span class="tile-title">Mes réservations de salles</span>
+                <span class="tile-text">Suivez et annulez vos réservations de salles.</span>
+                <span class="tile-link">Accéder &rarr;</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ===== GESTIONNAIRE ===== -->
+    <div class="row g-3" sec:authorize="hasRole('GESTIONNAIRE')">
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/demandes/gestion(statut='SOUMISE')}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-inbox"/></svg></span>
+                <span class="tile-title">Demandes à traiter</span>
+                <span class="tile-text">Les nouvelles demandes en attente de prise en charge.</span>
+                <span class="tile-link">Traiter &rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/demandes/gestion}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-doc"/></svg></span>
+                <span class="tile-title">Toutes les demandes</span>
+                <span class="tile-text">Consultez toutes les demandes et filtrez-les par statut.</span>
+                <span class="tile-link">Consulter &rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/materiels}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-laptop"/></svg></span>
+                <span class="tile-title">Matériel</span>
+                <span class="tile-text">Gérez le catalogue et l'état du matériel.</span>
+                <span class="tile-link">Gérer &rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/reservations-materiel}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-calendar"/></svg></span>
+                <span class="tile-title">Réservations de matériel</span>
+                <span class="tile-text">Validez ou refusez les réservations en attente.</span>
+                <span class="tile-link">Accéder &rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/signalements}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-alert"/></svg></span>
+                <span class="tile-title">Pannes</span>
+                <span class="tile-text">Signalez et clôturez les pannes de matériel.</span>
+                <span class="tile-link">Accéder &rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/salles}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-room"/></svg></span>
+                <span class="tile-title">Salles</span>
+                <span class="tile-text">Gérez les salles et leurs réservations.</span>
+                <span class="tile-link">Gérer &rarr;</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- ===== ADMINISTRATEUR ===== -->
+    <div class="row g-3" sec:authorize="hasRole('ADMIN')">
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/utilisateurs}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-users"/></svg></span>
+                <span class="tile-title">Utilisateurs</span>
+                <span class="tile-text">Consultez, modifiez et désactivez les comptes.</span>
+                <span class="tile-link">Gérer &rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/utilisateurs/nouveau}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-plus"/></svg></span>
+                <span class="tile-title">Nouveau compte</span>
+                <span class="tile-text">Créez un compte étudiant ou gestionnaire.</span>
+                <span class="tile-link">Créer &rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/types-document}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-folder"/></svg></span>
+                <span class="tile-title">Types de documents</span>
+                <span class="tile-text">Gérez les documents que les étudiants peuvent demander.</span>
+                <span class="tile-link">Gérer &rarr;</span>
+            </a>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <a class="tile" th:href="@{/mot-de-passe}">
+                <span class="tile-icon"><svg class="icon"><use href="#i-key"/></svg></span>
+                <span class="tile-title">Mon mot de passe</span>
+                <span class="tile-text">Modifiez le mot de passe de votre compte.</span>
+                <span class="tile-link">Modifier &rarr;</span>
+            </a>
+        </div>
+    </div>
+
+</section>
+</body>
+</html>

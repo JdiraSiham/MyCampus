@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Demandes - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 th:text="${gestion} ? 'Gestion des demandes' : 'Mes demandes'"></h2>
+        <a class="btn btn-primary" th:unless="${gestion}"
+           th:href="@{/demandes/nouvelle}">Nouvelle demande</a>
+    </div>
+
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <!-- Recherche et filtres (la recherche par nom n'existe que pour le gestionnaire) -->
+    <form class="row g-2 mb-3" method="get"
+          th:action="${gestion} ? @{/demandes/gestion} : @{/demandes}">
+
+        <div class="col-lg-4" th:if="${gestion}">
+            <input type="search" class="form-control" name="q" th:value="${recherche}"
+                   placeholder="Nom ou prénom de l'étudiant"/>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <select class="form-select" name="statut">
+                <option value="">Tous les statuts</option>
+                <option value="SOUMISE" th:selected="${statutChoisi?.name() == 'SOUMISE'}">Soumise</option>
+                <option value="EN_COURS" th:selected="${statutChoisi?.name() == 'EN_COURS'}">En cours</option>
+                <option value="PRETE" th:selected="${statutChoisi?.name() == 'PRETE'}">Prête</option>
+                <option value="REJETEE" th:selected="${statutChoisi?.name() == 'REJETEE'}">Rejetée</option>
+            </select>
+        </div>
+
+        <div class="col-md-6 col-lg-3">
+            <select class="form-select" name="typeId">
+                <option value="">Tous les documents</option>
+                <option th:each="t : ${types}" th:value="${t.id}" th:text="${t.libelle}"
+                        th:selected="${t.id == typeChoisi}"></option>
+            </select>
+        </div>
+
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Filtrer</button>
+            <a class="btn btn-secondary"
+               th:href="${gestion} ? @{/demandes/gestion} : @{/demandes}">Réinitialiser</a>
+        </div>
+    </form>
+
+    <p class="text-muted small mb-2"><span th:text="${#lists.size(demandes)}">0</span> demande(s)</p>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>N°</th>
+            <th>Document</th>
+            <th th:if="${gestion}">Étudiant</th>
+            <th>Date de dépôt</th>
+            <th>Statut</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="d : ${demandes}">
+            <td th:text="${d.id}"></td>
+            <td th:text="${d.typeDocument.libelle}"></td>
+            <td th:if="${gestion}" th:text="${d.etudiant.nom + ' ' + d.etudiant.prenom}"></td>
+            <td th:text="${#temporals.format(d.dateDepot, 'dd/MM/yyyy HH:mm')}"></td>
+            <td>
+                <span th:switch="${d.statut.name()}">
+                    <span th:case="'SOUMISE'" class="badge bg-secondary">Soumise</span>
+                    <span th:case="'EN_COURS'" class="badge bg-primary">En cours</span>
+                    <span th:case="'PRETE'" class="badge bg-success">Prête</span>
+                    <span th:case="'REJETEE'" class="badge bg-danger">Rejetée</span>
+                </span>
+            </td>
+            <td>
+                <a class="btn btn-sm btn-outline-primary"
+                   th:href="@{/demandes/detail(id=${d.id})}">Détail</a>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(demandes)}">
+            <td th:attr="colspan=${gestion} ? 6 : 5" class="text-center text-muted">
+                Aucune demande trouvée.
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>

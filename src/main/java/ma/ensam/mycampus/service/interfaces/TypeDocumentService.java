@@ -10,4 +10,5 @@ public interface TypeDocumentService {
     TypeDocument creer(TypeDocument typeDocument);
     TypeDocument modifier(Long id, TypeDocument donnees);
     void desactiver(Long id);
+    List<TypeDocument> rechercher(String recherche);
 }

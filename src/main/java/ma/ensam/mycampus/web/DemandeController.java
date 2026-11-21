@@ -32,14 +32,18 @@ public class DemandeController {
     }
 
     @GetMapping("/demandes")
-    public String mesDemandes(Principal principal, Model model) {
+    public String mesDemandes(@RequestParam(required = false) StatutDemande statut, @RequestParam(required = false) Long typeId, Principal principal, Model model) {
         try {
             Utilisateur connecte = utilisateurConnecte(principal);
             if (connecte.getRole() == Role.GESTIONNAIRE) {
                 return "redirect:/demandes/gestion";
             }
-            model.addAttribute("demandes", demandeService.listerPourEtudiant(connecte.getId()));
+            model.addAttribute("demandes", demandeService.rechercherPourEtudiant(connecte.getId(), statut, typeId));
             model.addAttribute("gestion", false);
+            model.addAttribute("statuts", StatutDemande.values());
+            model.addAttribute("types", typeDocumentService.listerTous());
+            model.addAttribute("statutChoisi", statut);
+            model.addAttribute("typeChoisi", typeId);
             return "demandes/liste";
         } catch (BusinessException e) {
             return afficherErreur(model, e.getMessage());
@@ -77,14 +81,16 @@ public class DemandeController {
     }
 
     @GetMapping("/demandes/gestion")
-    public String gestion(@RequestParam(required = false) StatutDemande statut, Principal principal, Model model) {
+    public String gestion(@RequestParam(required = false) String q, @RequestParam(required = false) StatutDemande statut, @RequestParam(required = false) Long typeId, Principal principal, Model model) {
         try {
             Utilisateur connecte = utilisateurConnecte(principal);
-            List<DemandeAdministrative> demandes = (statut == null) ? demandeService.listerToutes(connecte.getId()) : demandeService.listerParStatut(connecte.getId(), statut);
-            model.addAttribute("demandes", demandes);
+            model.addAttribute("demandes", demandeService.rechercherPourGestionnaire(connecte.getId(), q, statut, typeId));
             model.addAttribute("gestion", true);
             model.addAttribute("statuts", StatutDemande.values());
+            model.addAttribute("types", typeDocumentService.listerTous());
             model.addAttribute("statutChoisi", statut);
+            model.addAttribute("typeChoisi", typeId);
+            model.addAttribute("recherche", q);
             return "demandes/liste";
         } catch (BusinessException e) {
             return afficherErreur(model, e.getMessage());

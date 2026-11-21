@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Détail de la demande - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h2>Demande n° <span th:text="${demande.id}"></span></h2>
+
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <div class="card mb-3">
+        <div class="card-body">
+            <dl class="row mb-0">
+                <dt class="col-sm-4">Document demandé</dt>
+                <dd class="col-sm-8" th:text="${demande.typeDocument.libelle}"></dd>
+
+                <dt class="col-sm-4">Étudiant</dt>
+                <dd class="col-sm-8"
+                    th:text="${demande.etudiant.nom + ' ' + demande.etudiant.prenom}"></dd>
+
+                <dt class="col-sm-4">Date de dépôt</dt>
+                <dd class="col-sm-8"
+                    th:text="${#temporals.format(demande.dateDepot, 'dd/MM/yyyy HH:mm')}"></dd>
+
+                <dt class="col-sm-4">Statut</dt>
+                <dd class="col-sm-8">
+                    <span th:switch="${demande.statut.name()}">
+                        <span th:case="'SOUMISE'" class="badge bg-secondary">Soumise</span>
+                        <span th:case="'EN_COURS'" class="badge bg-primary">En cours</span>
+                        <span th:case="'PRETE'" class="badge bg-success">Prête</span>
+                        <span th:case="'REJETEE'" class="badge bg-danger">Rejetée</span>
+                    </span>
+                </dd>
+
+                <dt class="col-sm-4" th:if="${demande.agentTraitant != null}">Pris en charge par</dt>
+                <dd class="col-sm-8" th:if="${demande.agentTraitant != null}"
+                    th:text="${demande.agentTraitant.nom + ' ' + demande.agentTraitant.prenom}"></dd>
+
+                <dt class="col-sm-4" th:if="${demande.dateTraitement != null}">Date de traitement</dt>
+                <dd class="col-sm-8" th:if="${demande.dateTraitement != null}"
+                    th:text="${#temporals.format(demande.dateTraitement, 'dd/MM/yyyy HH:mm')}"></dd>
+
+                <dt class="col-sm-4" th:if="${demande.motif != null}">Motif du rejet</dt>
+                <dd class="col-sm-8" th:if="${demande.motif != null}" th:text="${demande.motif}"></dd>
+            </dl>
+        </div>
+    </div>
+
+    <!-- Actions du gestionnaire -->
+    <div th:if="${peutTraiter}" class="mb-3">
+
+        <form th:if="${demande.statut.name() == 'SOUMISE'}"
+              th:action="@{/demandes/prendre-en-charge}" method="post">
+            <input type="hidden" name="id" th:value="${demande.id}"/>
+            <button type="submit" class="btn btn-primary">Prendre en charge</button>
+        </form>
+
+        <div th:if="${demande.statut.name() == 'EN_COURS'}">
+            <form class="mb-3" th:action="@{/demandes/prete}" method="post">
+                <input type="hidden" name="id" th:value="${demande.id}"/>
+                <button type="submit" class="btn btn-success">Marquer le document comme prêt</button>
+            </form>
+
+            <form class="col-md-6" th:action="@{/demandes/rejeter}" method="post">
+                <input type="hidden" name="id" th:value="${demande.id}"/>
+                <div class="mb-2">
+                    <label class="form-label" for="motif">Motif du rejet *</label>
+                    <textarea class="form-control" id="motif" name="motif" rows="2" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-outline-danger">Rejeter la demande</button>
+            </form>
+        </div>
+    </div>
+
+    <a class="btn btn-secondary" th:href="@{/demandes}">Retour</a>
+</section>
+</body>
+</html>

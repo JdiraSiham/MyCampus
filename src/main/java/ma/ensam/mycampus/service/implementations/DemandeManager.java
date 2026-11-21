@@ -14,7 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
+import org.springframework.data.domain.Sort;
 
 @Service
 @Transactional
@@ -135,5 +137,46 @@ public class DemandeManager implements DemandeService {
             throw new BusinessException("Action non autorisée pour ce rôle.");
         }
         return utilisateur;
+    }
+
+    @Override
+    public List<DemandeAdministrative> rechercherPourEtudiant(Long etudiantId, StatutDemande statut, Long typeDocumentId) {
+        Utilisateur etudiant = chargerAvecRole(etudiantId, Role.ETUDIANT);
+        List<DemandeAdministrative> demandes = demandeRepository.findByEtudiant(etudiant, Sort.by(Sort.Direction.DESC, "dateDepot"));
+        return filtrer(demandes, null, statut, typeDocumentId);
+    }
+
+    @Override
+    public List<DemandeAdministrative> rechercherPourGestionnaire(Long gestionnaireId, String recherche, StatutDemande statut, Long typeDocumentId) {
+        chargerAvecRole(gestionnaireId, Role.GESTIONNAIRE);
+        List<DemandeAdministrative> demandes = demandeRepository.findAll(Sort.by(Sort.Direction.DESC, "dateDepot"));
+        return filtrer(demandes, normaliser(recherche), statut, typeDocumentId);
+    }
+
+    private String normaliser(String texte) {
+        return (texte == null || texte.isBlank()) ? null : texte.trim();
+    }
+
+    private List<DemandeAdministrative> filtrer(List<DemandeAdministrative> demandes, String texte, StatutDemande statut, Long typeDocumentId) {
+        List<DemandeAdministrative> resultat = new ArrayList<>();
+        for (DemandeAdministrative d : demandes) {
+            boolean statutOk = (statut == null) || d.getStatut() == statut;
+            boolean typeOk = (typeDocumentId == null) || d.getTypeDocument().getId().equals(typeDocumentId);
+            boolean nomOk = nomCorrespond(d.getEtudiant(), texte);
+            if (statutOk && typeOk && nomOk) {
+                resultat.add(d);
+            }
+        }
+        return resultat;
+    }
+
+    private boolean nomCorrespond(Utilisateur etudiant, String texte) {
+        if (texte == null) {
+            return true;
+        }
+        String recherche = texte.toLowerCase();
+        String prenomNom = (etudiant.getPrenom() + " " + etudiant.getNom()).toLowerCase();
+        String nomPrenom = (etudiant.getNom() + " " + etudiant.getPrenom()).toLowerCase();
+        return prenomNom.contains(recherche) || nomPrenom.contains(recherche);
     }
 }

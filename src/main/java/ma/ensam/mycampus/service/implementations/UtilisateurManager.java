@@ -12,6 +12,8 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
+import org.springframework.data.domain.Sort;
+import java.util.ArrayList;
 
 @Service
 @Transactional
@@ -133,5 +135,34 @@ public class UtilisateurManager implements UtilisateurService {
                 || u.getRole() == null) {
             throw new BusinessException("Nom, prénom, email et rôle sont obligatoires.");
         }
+    }
+
+    @Override
+    public List<Utilisateur> rechercher(Role role, String recherche) {
+        Sort tri = Sort.by("nom", "prenom");
+        List<Utilisateur> utilisateurs = (role == null) ? utilisateurRepository.findAll(tri) : utilisateurRepository.findByRole(role, tri);
+
+        String texte = normaliser(recherche);
+        List<Utilisateur> resultat = new ArrayList<>();
+        for (Utilisateur u : utilisateurs) {
+            if (correspond(u, texte)) {
+                resultat.add(u);
+            }
+        }
+        return resultat;
+    }
+
+    private String normaliser(String texte) {
+        return (texte == null || texte.isBlank()) ? null : texte.trim();
+    }
+
+    private boolean correspond(Utilisateur u, String texte) {
+        if (texte == null) {
+            return true;
+        }
+        String recherche = texte.toLowerCase();
+        String prenomNom = (u.getPrenom() + " " + u.getNom()).toLowerCase();
+        String nomPrenom = (u.getNom() + " " + u.getPrenom()).toLowerCase();
+        return prenomNom.contains(recherche) || nomPrenom.contains(recherche);
     }
 }

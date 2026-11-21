@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Types de documents - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2>Types de documents</h2>
+        <a class="btn btn-primary" th:href="@{/types-document/nouveau}">Nouveau type</a>
+    </div>
+
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <!-- Recherche -->
+    <form class="row g-2 mb-3" th:action="@{/types-document}" method="get">
+        <div class="col-md-6 col-lg-5">
+            <input type="search" class="form-control" name="q" th:value="${recherche}"
+                   placeholder="Rechercher un type de document"/>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Rechercher</button>
+            <a class="btn btn-secondary" th:unless="${#strings.isEmpty(recherche)}"
+               th:href="@{/types-document}">Effacer</a>
+        </div>
+    </form>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Libellé</th>
+            <th>Description</th>
+            <th>Statut</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="t : ${types}">
+            <td th:text="${t.libelle}"></td>
+            <td th:text="${t.description}"></td>
+            <td>
+                <span class="badge bg-success" th:if="${t.actif}">Actif</span>
+                <span class="badge bg-secondary" th:unless="${t.actif}">Inactif</span>
+            </td>
+            <td>
+                <a class="btn btn-sm btn-outline-primary"
+                   th:href="@{/types-document/modifier(id=${t.id})}">Modifier</a>
+                <form class="d-inline" th:if="${t.actif}"
+                      th:action="@{/types-document/desactiver}" method="post">
+                    <input type="hidden" name="id" th:value="${t.id}"/>
+                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('Désactiver ce type de document ?');">Désactiver</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(types)}">
+            <td colspan="4" class="text-center text-muted">Aucun type de document trouvé.</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>
