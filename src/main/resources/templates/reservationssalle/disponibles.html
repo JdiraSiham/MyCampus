@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Salles disponibles - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h2>Rechercher une salle disponible</h2>
+
+    <div class="alert alert-success" th:if="${succes}" th:text="${succes}"></div>
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <form class="row g-2 mb-3" method="get" th:action="@{/reservations-salle/disponibles}">
+        <div class="col-md-6 col-lg-4">
+            <label class="form-label" for="dateDebut">Début *</label>
+            <input type="datetime-local" class="form-control" id="dateDebut" name="dateDebut"
+                   th:value="${dateDebut}" required/>
+        </div>
+        <div class="col-md-6 col-lg-4">
+            <label class="form-label" for="dateFin">Fin *</label>
+            <input type="datetime-local" class="form-control" id="dateFin" name="dateFin"
+                   th:value="${dateFin}" required/>
+        </div>
+        <div class="col-12">
+            <button type="submit" class="btn btn-primary">Rechercher</button>
+            <a class="btn btn-secondary" th:href="@{/reservations-salle/disponibles}">Réinitialiser</a>
+        </div>
+    </form>
+
+    <th:block th:if="${recherche}">
+        <p class="text-muted small mb-2"><span th:text="${#lists.size(salles)}">0</span> salle(s) disponible(s)</p>
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th>Nom</th>
+                <th>Capacité</th>
+                <th>Localisation</th>
+                <th>Équipements</th>
+                <th>Validation requise</th>
+                <th>Actions</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="s : ${salles}">
+                <td th:text="${s.nom}"></td>
+                <td th:text="${s.capacite}"></td>
+                <td th:text="${s.localisation}"></td>
+                <td th:text="${s.equipements}"></td>
+                <td th:text="${s.necessiteValidation} ? 'Oui' : 'Non'"></td>
+                <td>
+                    <a class="btn btn-sm btn-primary"
+                       th:href="@{/reservations-salle/nouvelle(salleId=${s.id}, dateDebut=${dateDebut}, dateFin=${dateFin})}">Réserver</a>
+                </td>
+            </tr>
+            <tr th:if="${#lists.isEmpty(salles)}">
+                <td colspan="6" class="text-center text-muted">Aucune salle disponible sur cette période.</td>
+            </tr>
+            </tbody>
+        </table>
+    </th:block>
+</section>
+</body>
+</html>

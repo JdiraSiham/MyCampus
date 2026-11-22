@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Réservations de matériel - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h2>Réservations de matériel</h2>
+
+    <div class="alert alert-success" th:if="${succes}" th:text="${succes}"></div>
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <form class="row g-2 mb-3" method="get" th:action="@{/reservations-materiel/gestion}">
+        <div class="col-md-6 col-lg-3">
+            <select class="form-select" name="statut">
+                <option value="">Tous les statuts</option>
+                <option value="EN_ATTENTE" th:selected="${statutChoisi?.name() == 'EN_ATTENTE'}">En attente</option>
+                <option value="VALIDEE" th:selected="${statutChoisi?.name() == 'VALIDEE'}">Validée</option>
+                <option value="REFUSEE" th:selected="${statutChoisi?.name() == 'REFUSEE'}">Refusée</option>
+                <option value="ANNULEE" th:selected="${statutChoisi?.name() == 'ANNULEE'}">Annulée</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Filtrer</button>
+            <a class="btn btn-secondary" th:href="@{/reservations-materiel/gestion}">Réinitialiser</a>
+        </div>
+    </form>
+
+    <p class="text-muted small mb-2"><span th:text="${#lists.size(reservations)}">0</span> réservation(s)</p>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Étudiant</th>
+            <th>Matériel</th>
+            <th>Début</th>
+            <th>Fin</th>
+            <th>Statut</th>
+            <th>Décision</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="r : ${reservations}">
+            <td th:text="${r.demandeur.nom + ' ' + r.demandeur.prenom}"></td>
+            <td th:text="${r.materiel.nom}"></td>
+            <td th:text="${#temporals.format(r.dateDebut, 'dd/MM/yyyy HH:mm')}"></td>
+            <td th:text="${#temporals.format(r.dateFin, 'dd/MM/yyyy HH:mm')}"></td>
+            <td>
+                <span th:switch="${r.statut.name()}">
+                    <span th:case="'EN_ATTENTE'" class="badge bg-warning text-dark">En attente</span>
+                    <span th:case="'VALIDEE'" class="badge bg-success">Validée</span>
+                    <span th:case="'REFUSEE'" class="badge bg-danger">Refusée</span>
+                    <span th:case="'ANNULEE'" class="badge bg-secondary">Annulée</span>
+                </span>
+            </td>
+            <td>
+                <span th:if="${r.decideur != null}" th:text="${r.decideur.nom + ' ' + r.decideur.prenom}"></span>
+                <div class="text-muted small" th:if="${r.motif != null}" th:text="${r.motif}"></div>
+            </td>
+            <td>
+                <th:block th:if="${r.statut.name() == 'EN_ATTENTE'}">
+                    <form class="d-inline" th:action="@{/reservations-materiel/valider}" method="post">
+                        <input type="hidden" name="id" th:value="${r.id}"/>
+                        <button type="submit" class="btn btn-sm btn-primary">Valider</button>
+                    </form>
+                    <form class="d-flex gap-1 mt-1" th:action="@{/reservations-materiel/refuser}" method="post">
+                        <input type="hidden" name="id" th:value="${r.id}"/>
+                        <input type="text" class="form-control form-control-sm" name="motif"
+                               placeholder="Motif du refus *" required/>
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Refuser cette réservation ?');">Refuser</button>
+                    </form>
+                </th:block>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(reservations)}">
+            <td colspan="7" class="text-center text-muted">Aucune réservation trouvée.</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>

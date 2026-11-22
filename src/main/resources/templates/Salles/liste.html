@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Salles - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 th:text="${gestion} ? 'Gestion des salles' : 'Salles'"></h2>
+        <a class="btn btn-primary" th:if="${gestion}" th:href="@{/salles/nouveau}">Nouvelle salle</a>
+    </div>
+
+    <div class="alert alert-success" th:if="${succes}" th:text="${succes}"></div>
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <p class="text-muted small mb-2"><span th:text="${#lists.size(salles)}">0</span> salle(s)</p>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Capacité</th>
+            <th>Localisation</th>
+            <th>Équipements</th>
+            <th>Validation requise</th>
+            <th th:if="${gestion}">Statut</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="s : ${salles}">
+            <td th:text="${s.nom}"></td>
+            <td th:text="${s.capacite}"></td>
+            <td th:text="${s.localisation}"></td>
+            <td th:text="${s.equipements}"></td>
+            <td th:text="${s.necessiteValidation} ? 'Oui' : 'Non'"></td>
+            <td th:if="${gestion}">
+                <span class="badge bg-success" th:if="${s.actif}">Actif</span>
+                <span class="badge bg-secondary" th:unless="${s.actif}">Inactif</span>
+            </td>
+            <td>
+                <!-- Étudiant -->
+                <a class="btn btn-sm btn-primary" th:unless="${gestion}"
+                   th:href="@{/reservations-salle/nouvelle(salleId=${s.id})}">Réserver</a>
+
+                <!-- Gestionnaire -->
+                <th:block th:if="${gestion and s.actif}">
+                    <a class="btn btn-sm btn-outline-primary"
+                       th:href="@{/salles/modifier(id=${s.id})}">Modifier</a>
+                    <form class="d-inline" th:action="@{/salles/desactiver}" method="post">
+                        <input type="hidden" name="id" th:value="${s.id}"/>
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Désactiver cette salle ?');">Désactiver</button>
+                    </form>
+                </th:block>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(salles)}">
+            <td th:attr="colspan=${gestion} ? 7 : 6" class="text-center text-muted">Aucune salle trouvée.</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>

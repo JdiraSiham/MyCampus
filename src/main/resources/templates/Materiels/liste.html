@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Matériel - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2 th:text="${gestion} ? 'Gestion du matériel' : 'Matériel disponible'"></h2>
+        <a class="btn btn-primary" th:if="${gestion}" th:href="@{/materiels/nouveau}">Nouveau matériel</a>
+    </div>
+
+    <div class="alert alert-success" th:if="${succes}" th:text="${succes}"></div>
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <p class="text-muted small mb-2"><span th:text="${#lists.size(materiels)}">0</span> matériel(s)</p>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Référence</th>
+            <th>Description</th>
+            <th>Quantité</th>
+            <th>État</th>
+            <th th:if="${gestion}">Statut</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="m : ${materiels}">
+            <td th:text="${m.nom}"></td>
+            <td th:text="${m.reference}"></td>
+            <td th:text="${m.description}"></td>
+            <td th:text="${m.quantite}"></td>
+            <td>
+                <span th:switch="${m.etat.name()}">
+                    <span th:case="'DISPONIBLE'" class="badge bg-success">Disponible</span>
+                    <span th:case="'EN_PANNE'" class="badge bg-danger">En panne</span>
+                    <span th:case="'INDISPONIBLE'" class="badge bg-secondary">Indisponible</span>
+                </span>
+            </td>
+            <td th:if="${gestion}">
+                <span class="badge bg-success" th:if="${m.actif}">Actif</span>
+                <span class="badge bg-secondary" th:unless="${m.actif}">Inactif</span>
+            </td>
+            <td>
+                <!-- Étudiant : réserver un matériel disponible -->
+                <a class="btn btn-sm btn-primary" th:unless="${gestion}"
+                   th:if="${m.etat.name() == 'DISPONIBLE'}"
+                   th:href="@{/reservations-materiel/nouvelle(materielId=${m.id})}">Réserver</a>
+
+                <!-- Gestionnaire -->
+                <th:block th:if="${gestion and m.actif}">
+                    <a class="btn btn-sm btn-outline-primary"
+                       th:href="@{/materiels/modifier(id=${m.id})}">Modifier</a>
+
+                    <!-- EN_PANNE ne se change pas ici : il est géré par les signalements -->
+                    <form class="d-inline" th:if="${m.etat.name() != 'EN_PANNE'}"
+                          th:action="@{/materiels/etat}" method="post">
+                        <input type="hidden" name="id" th:value="${m.id}"/>
+                        <input type="hidden" name="etat"
+                               th:value="${m.etat.name() == 'DISPONIBLE'} ? 'INDISPONIBLE' : 'DISPONIBLE'"/>
+                        <button type="submit" class="btn btn-sm btn-outline-primary"
+                                th:text="${m.etat.name() == 'DISPONIBLE'} ? 'Rendre indisponible' : 'Rendre disponible'"></button>
+                    </form>
+
+                    <form class="d-inline" th:action="@{/materiels/desactiver}" method="post">
+                        <input type="hidden" name="id" th:value="${m.id}"/>
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Désactiver ce matériel ?');">Désactiver</button>
+                    </form>
+                </th:block>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(materiels)}">
+            <td th:attr="colspan=${gestion} ? 7 : 6" class="text-center text-muted">Aucun matériel trouvé.</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>

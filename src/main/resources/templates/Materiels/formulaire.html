@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Matériel - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h2 th:text="${materielId == null} ? 'Nouveau matériel' : 'Modifier le matériel'"></h2>
+
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <form th:action="@{/materiels/enregistrer}" th:object="${materiel}" method="post" class="col-md-6">
+        <!-- id : absent à la création, présent à la modification -->
+        <input type="hidden" name="id" th:if="${materielId != null}" th:value="${materielId}"/>
+
+        <div class="mb-3">
+            <label class="form-label" for="nom">Nom *</label>
+            <input type="text" class="form-control" id="nom" th:field="*{nom}" required/>
+            <div class="text-danger small" th:if="${#fields.hasErrors('nom')}" th:errors="*{nom}"></div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="reference">Référence *</label>
+            <input type="text" class="form-control" id="reference" th:field="*{reference}" required/>
+            <div class="text-danger small" th:if="${#fields.hasErrors('reference')}" th:errors="*{reference}"></div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="description">Description</label>
+            <textarea class="form-control" id="description" rows="3" th:field="*{description}"></textarea>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="quantite">Quantité *</label>
+            <input type="number" min="1" class="form-control" id="quantite" th:field="*{quantite}" required/>
+            <div class="text-danger small" th:if="${#fields.hasErrors('quantite')}" th:errors="*{quantite}"></div>
+        </div>
+
+        <!-- État choisi à la création ; à la modification il est conservé (il se change dans la liste) -->
+        <div class="mb-3" th:if="${materielId == null}">
+            <label class="form-label" for="etat">État *</label>
+            <select class="form-select" id="etat" th:field="*{etat}" required>
+                <option th:each="e : ${etats}" th:value="${e}"
+                        th:text="${e.name() == 'DISPONIBLE'} ? 'Disponible' : 'Indisponible'"></option>
+            </select>
+        </div>
+        <input type="hidden" th:if="${materielId != null}" th:field="*{etat}"/>
+
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a class="btn btn-secondary" th:href="@{/materiels}">Annuler</a>
+    </form>
+</section>
+</body>
+</html>

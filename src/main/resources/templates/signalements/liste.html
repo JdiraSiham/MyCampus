@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Pannes - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2>Signalements de panne</h2>
+        <a class="btn btn-primary" th:href="@{/signalements/nouveau}">Signaler une panne</a>
+    </div>
+
+    <div class="alert alert-success" th:if="${succes}" th:text="${succes}"></div>
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <form class="row g-2 mb-3" method="get" th:action="@{/signalements}">
+        <div class="col-md-6 col-lg-3">
+            <select class="form-select" name="nonResolus">
+                <option value="">Tous les signalements</option>
+                <option value="true" th:selected="${nonResolus}">En cours seulement</option>
+            </select>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Filtrer</button>
+            <a class="btn btn-secondary" th:href="@{/signalements}">Réinitialiser</a>
+        </div>
+    </form>
+
+    <p class="text-muted small mb-2"><span th:text="${#lists.size(signalements)}">0</span> signalement(s)</p>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Matériel</th>
+            <th>Description</th>
+            <th>Signalé par</th>
+            <th>Date</th>
+            <th>Statut</th>
+            <th>Résolution</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="s : ${signalements}">
+            <td th:text="${s.materiel.nom}"></td>
+            <td th:text="${s.description}"></td>
+            <td th:text="${s.auteur.nom + ' ' + s.auteur.prenom}"></td>
+            <td th:text="${#temporals.format(s.dateSignalement, 'dd/MM/yyyy HH:mm')}"></td>
+            <td>
+                <span class="badge bg-success" th:if="${s.resolu}">Résolu</span>
+                <span class="badge bg-warning text-dark" th:unless="${s.resolu}">En cours</span>
+            </td>
+            <td>
+                <span th:if="${s.resoluPar != null}" th:text="${s.resoluPar.nom + ' ' + s.resoluPar.prenom}"></span>
+                <div class="text-muted small" th:if="${s.dateResolution != null}"
+                     th:text="${#temporals.format(s.dateResolution, 'dd/MM/yyyy HH:mm')}"></div>
+            </td>
+            <td>
+                <form class="d-inline" th:unless="${s.resolu}"
+                      th:action="@{/signalements/cloturer}" method="post">
+                    <input type="hidden" name="id" th:value="${s.id}"/>
+                    <button type="submit" class="btn btn-sm btn-primary"
+                            onclick="return confirm('Clôturer ce signalement ?');">Clôturer</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(signalements)}">
+            <td colspan="7" class="text-center text-muted">Aucun signalement trouvé.</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>

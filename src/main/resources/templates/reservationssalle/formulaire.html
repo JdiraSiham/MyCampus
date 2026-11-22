@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Nouvelle réservation de salle - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h2>Nouvelle réservation de salle</h2>
+
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <div class="alert alert-warning" th:if="${#lists.isEmpty(salles)}">
+        Aucune salle n'est disponible pour le moment.
+    </div>
+
+    <form th:action="@{/reservations-salle/reserver}" method="post" class="col-md-6"
+          th:unless="${#lists.isEmpty(salles)}">
+        <div class="mb-3">
+            <label class="form-label" for="salleId">Salle *</label>
+            <select class="form-select" id="salleId" name="salleId" required>
+                <option value="">-- Choisir une salle --</option>
+                <option th:each="s : ${salles}" th:value="${s.id}"
+                        th:text="${s.nom + ' (' + s.capacite + ' places)'}"
+                        th:selected="${s.id == salleId}"></option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="dateDebut">Début *</label>
+            <input type="datetime-local" class="form-control" id="dateDebut" name="dateDebut"
+                   th:value="${dateDebut}" required/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="dateFin">Fin *</label>
+            <input type="datetime-local" class="form-control" id="dateFin" name="dateFin"
+                   th:value="${dateFin}" required/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="objet">Objet de la réservation *</label>
+            <input type="text" class="form-control" id="objet" name="objet" th:value="${objet}" required/>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Réserver</button>
+        <a class="btn btn-secondary" th:href="@{/reservations-salle/mes-reservations}">Annuler</a>
+    </form>
+</section>
+</body>
+</html>
