@@ -7,6 +7,7 @@ import ma.ensam.mycampus.dao.entities.Utilisateur;
 import ma.ensam.mycampus.dao.entities.enums.EtatMateriel;
 import ma.ensam.mycampus.dao.entities.enums.Role;
 import ma.ensam.mycampus.dao.entities.enums.StatutReservation;
+import ma.ensam.mycampus.dao.entities.enums.StatutSignalement;
 import ma.ensam.mycampus.dao.repositories.MaterielRepository;
 import ma.ensam.mycampus.dao.repositories.ReservationMaterielRepository;
 import ma.ensam.mycampus.dao.repositories.SignalementPanneRepository;
@@ -25,6 +26,10 @@ public class SignalementPanneManager implements SignalementPanneService {
 
     private static final List<StatutReservation> STATUTS_BLOQUANTS =
             List.of(StatutReservation.EN_ATTENTE, StatutReservation.VALIDEE);
+
+    // Un signalement dans l'un de ces statuts (et non résolu) bloque un nouveau signalement
+    private static final List<StatutSignalement> STATUTS_EN_COURS =
+            List.of(StatutSignalement.EN_ATTENTE, StatutSignalement.VALIDEE);
 
     private final SignalementPanneRepository signalementRepository;
     private final MaterielRepository materielRepository;
@@ -74,37 +79,85 @@ public class SignalementPanneManager implements SignalementPanneService {
             throw new BusinessException("Seul un étudiant ou un gestionnaire peut signaler une panne.");
         }
 
-        if (signalementRepository.existsByMaterielIdAndResoluFalse(materielId)) {
-            throw new BusinessException("Une panne non résolue est déjà signalée pour ce matériel.");
+        if (signalementRepository.existsByMaterielIdAndResoluFalseAndStatutIn(materielId, STATUTS_EN_COURS)) {
+            throw new BusinessException(
+                    "Une panne est déjà signalée pour ce matériel (en attente de décision ou validée).");
         }
 
-        // 1. Création du signalement
         SignalementPanne signalement = new SignalementPanne();
         signalement.setMateriel(materiel);
         signalement.setAuteur(auteur);
         signalement.setDescription(description);
         signalement.setResolu(false);
+
+        if (auteur.getRole() == Role.GESTIONNAIRE) {
+            // Le gestionnaire décide lui-même : la panne est validée tout de suite
+            signalement.setStatut(StatutSignalement.VALIDEE);
+            signalement.setDecideur(auteur);
+            signalement.setDateDecision(LocalDateTime.now());
+            SignalementPanne enregistre = signalementRepository.save(signalement);
+            appliquerPanne(materiel);
+            return enregistre;
+        }
+
+        // Étudiant : simple demande, aucun effet tant qu'un gestionnaire n'a pas validé
+        signalement.setStatut(StatutSignalement.EN_ATTENTE);
+        return signalementRepository.save(signalement);
+    }
+
+    @Override
+    public SignalementPanne valider(Long signalementId, Long gestionnaireId) {
+        Utilisateur gestionnaire = verifierGestionnaire(gestionnaireId,
+                "Seul un gestionnaire actif peut valider un signalement.");
+
+        SignalementPanne signalement = trouverParId(signalementId);
+        if (signalement.getStatut() != StatutSignalement.EN_ATTENTE) {
+            throw new BusinessException("Ce signalement a déjà été traité.");
+        }
+        Materiel materiel = signalement.getMateriel();
+        if (!materiel.isActif()) {
+            throw new BusinessException("Ce matériel est inactif.");
+        }
+
+        signalement.setStatut(StatutSignalement.VALIDEE);
+        signalement.setDecideur(gestionnaire);
+        signalement.setDateDecision(LocalDateTime.now());
         SignalementPanne enregistre = signalementRepository.save(signalement);
 
-        // 2. Le matériel passe EN_PANNE
-        materiel.setEtat(EtatMateriel.EN_PANNE);
-        materielRepository.save(materiel);
-
-        // 3. Annulation des réservations futures (avec un motif)
-        annulerReservationsFutures(materiel);
-
+        // Les effets de la panne ne sont appliqués qu'ici, dans la même transaction
+        appliquerPanne(materiel);
         return enregistre;
     }
 
     @Override
-    public SignalementPanne cloturer(Long signalementId, Long gestionnaireId) {
-        Utilisateur gestionnaire = utilisateurRepository.findById(gestionnaireId)
-                .orElseThrow(() -> new BusinessException("Utilisateur introuvable."));
-        if (!gestionnaire.isActif() || gestionnaire.getRole() != Role.GESTIONNAIRE) {
-            throw new BusinessException("Seul un gestionnaire actif peut clôturer un signalement.");
+    public SignalementPanne refuser(Long signalementId, Long gestionnaireId, String motif) {
+        Utilisateur gestionnaire = verifierGestionnaire(gestionnaireId,
+                "Seul un gestionnaire actif peut refuser un signalement.");
+        if (motif == null || motif.isBlank()) {
+            throw new BusinessException("Le motif du refus est obligatoire.");
         }
 
         SignalementPanne signalement = trouverParId(signalementId);
+        if (signalement.getStatut() != StatutSignalement.EN_ATTENTE) {
+            throw new BusinessException("Ce signalement a déjà été traité.");
+        }
+
+        signalement.setStatut(StatutSignalement.REFUSEE);
+        signalement.setDecideur(gestionnaire);
+        signalement.setDateDecision(LocalDateTime.now());
+        signalement.setMotifRefus(motif);
+        return signalementRepository.save(signalement);
+    }
+
+    @Override
+    public SignalementPanne cloturer(Long signalementId, Long gestionnaireId) {
+        Utilisateur gestionnaire = verifierGestionnaire(gestionnaireId,
+                "Seul un gestionnaire actif peut clôturer un signalement.");
+
+        SignalementPanne signalement = trouverParId(signalementId);
+        if (signalement.getStatut() != StatutSignalement.VALIDEE) {
+            throw new BusinessException("Seul un signalement validé peut être clôturé.");
+        }
         if (signalement.isResolu()) {
             throw new BusinessException("Ce signalement est déjà résolu.");
         }
@@ -142,7 +195,33 @@ public class SignalementPanneManager implements SignalementPanneService {
         return signalementRepository.findByMaterielId(materielId);
     }
 
-    // ----- méthode privée -----
+    @Override
+    public List<SignalementPanne> listerParStatut(StatutSignalement statut) {
+        return signalementRepository.findByStatut(statut);
+    }
+
+    @Override
+    public List<SignalementPanne> listerParAuteur(Long auteurId) {
+        return signalementRepository.findByAuteurId(auteurId);
+    }
+
+    // ----- méthodes privées -----
+
+    private Utilisateur verifierGestionnaire(Long gestionnaireId, String messageRefus) {
+        Utilisateur gestionnaire = utilisateurRepository.findById(gestionnaireId)
+                .orElseThrow(() -> new BusinessException("Utilisateur introuvable."));
+        if (!gestionnaire.isActif() || gestionnaire.getRole() != Role.GESTIONNAIRE) {
+            throw new BusinessException(messageRefus);
+        }
+        return gestionnaire;
+    }
+
+    // Effets d'une panne confirmée : matériel EN_PANNE + réservations futures annulées
+    private void appliquerPanne(Materiel materiel) {
+        materiel.setEtat(EtatMateriel.EN_PANNE);
+        materielRepository.save(materiel);
+        annulerReservationsFutures(materiel);
+    }
 
     private void annulerReservationsFutures(Materiel materiel) {
         List<ReservationMateriel> futures = reservationRepository

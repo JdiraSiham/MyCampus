@@ -3,6 +3,7 @@ package ma.ensam.mycampus.web;
 import jakarta.servlet.http.HttpServletRequest;
 import ma.ensam.mycampus.dao.entities.Materiel;
 import ma.ensam.mycampus.dao.entities.enums.EtatMateriel;
+import ma.ensam.mycampus.dao.entities.enums.StatutSignalement;
 import ma.ensam.mycampus.service.BusinessException;
 import ma.ensam.mycampus.service.interfaces.MaterielService;
 import ma.ensam.mycampus.service.interfaces.SignalementPanneService;
@@ -34,17 +35,26 @@ public class SignalementPanneController {
         this.utilisateurService = utilisateurService;
     }
 
-    // Gestionnaire : liste des signalements ; étudiant : directement le formulaire
+    // Gestionnaire : tous les signalements (filtre par statut) ; étudiant : ses propres signalements
     @GetMapping
-    public String liste(@RequestParam(defaultValue = "false") boolean nonResolus,
+    public String liste(@RequestParam(required = false) StatutSignalement statut,
                         Model model, HttpServletRequest request) {
         if (!request.isUserInRole("GESTIONNAIRE")) {
-            return "redirect:/signalements/nouveau";
+            return "redirect:/signalements/mes-signalements";
         }
-        model.addAttribute("signalements",
-                nonResolus ? signalementService.listerNonResolus() : signalementService.listerTout());
-        model.addAttribute("nonResolus", nonResolus);
+        model.addAttribute("signalements", statut == null
+                ? signalementService.listerTout()
+                : signalementService.listerParStatut(statut));
+        model.addAttribute("statutChoisi", statut);
         return "signalements/liste";
+    }
+
+    // ----- Étudiant -----
+
+    @GetMapping("/mes-signalements")
+    public String mesSignalements(Principal principal, Model model) {
+        model.addAttribute("signalements", signalementService.listerParAuteur(idConnecte(principal)));
+        return "signalements/mes-signalements";
     }
 
     @GetMapping("/nouveau")
@@ -60,16 +70,46 @@ public class SignalementPanneController {
                            HttpServletRequest request) {
         try {
             signalementService.signaler(idConnecte(principal), materielId, description);
+            if (request.isUserInRole("GESTIONNAIRE")) {
+                redirect.addFlashAttribute("succes",
+                        "Panne signalée et validée : le matériel est en panne et ses réservations à venir sont annulées.");
+                return "redirect:/signalements";
+            }
             redirect.addFlashAttribute("succes",
-                    "Panne signalée : le matériel est passé en panne et ses réservations à venir ont été annulées.");
-            return request.isUserInRole("GESTIONNAIRE")
-                    ? "redirect:/signalements"
-                    : "redirect:/signalements/nouveau";
+                    "Votre signalement a été transmis à un gestionnaire pour validation.");
+            return "redirect:/signalements/mes-signalements";
         } catch (BusinessException e) {
             model.addAttribute("erreur", e.getMessage());
             preparerFormulaire(model, materielId, description);
             return "signalements/formulaire";
         }
+    }
+
+    // ----- Gestionnaire -----
+
+    @PostMapping("/valider")
+    public String valider(@RequestParam Long id, Principal principal, RedirectAttributes redirect) {
+        try {
+            signalementService.valider(id, idConnecte(principal));
+            redirect.addFlashAttribute("succes",
+                    "Panne validée : le matériel est en panne et ses réservations à venir sont annulées.");
+        } catch (BusinessException e) {
+            redirect.addFlashAttribute("erreur", e.getMessage());
+        }
+        return "redirect:/signalements";
+    }
+
+    @PostMapping("/refuser")
+    public String refuser(@RequestParam Long id,
+                          @RequestParam(required = false) String motif,
+                          Principal principal, RedirectAttributes redirect) {
+        try {
+            signalementService.refuser(id, idConnecte(principal), motif);
+            redirect.addFlashAttribute("succes", "Signalement refusé : le matériel n'est pas modifié.");
+        } catch (BusinessException e) {
+            redirect.addFlashAttribute("erreur", e.getMessage());
+        }
+        return "redirect:/signalements";
     }
 
     @PostMapping("/cloturer")

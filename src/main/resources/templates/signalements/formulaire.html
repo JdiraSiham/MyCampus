@@ -1,7 +1,6 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      xmlns:sec="http://www.thymeleaf.org/extras/spring-security"
       layout:decorate="~{template}">
 <head>
     <title>Signaler une panne - MyCampus</title>
@@ -36,7 +35,7 @@
         </div>
 
         <button type="submit" class="btn btn-primary">Signaler</button>
-        <a class="btn btn-secondary" sec:authorize="hasRole('GESTIONNAIRE')" th:href="@{/signalements}">Annuler</a>
+        <a class="btn btn-secondary" th:href="@{/signalements}">Annuler</a>
     </form>
 </section>
 </body>
