@@ -1,5 +1,6 @@
 package ma.ensam.mycampus.web;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import ma.ensam.mycampus.dao.entities.Materiel;
 import ma.ensam.mycampus.dao.entities.enums.EtatMateriel;
@@ -12,7 +13,6 @@ import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.InitBinder;
 import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -24,56 +24,44 @@ import java.util.List;
 @RequestMapping("/materiels")
 public class MaterielController {
 
+    // EN_PANNE n'est jamais choisi à la main : il vient des signalements
+    private static final List<EtatMateriel> ETATS_CHOISIS =
+            List.of(EtatMateriel.DISPONIBLE, EtatMateriel.INDISPONIBLE);
+
     private final MaterielService materielService;
 
     public MaterielController(MaterielService materielService) {
         this.materielService = materielService;
     }
 
-    // Un formulaire falsifié ne peut pas imposer l'id ni la valeur de "actif".
+    // Le formulaire ne peut pas modifier l'id ni l'état actif
     @InitBinder("materiel")
-    public void initBinder(WebDataBinder binder) {
+    public void interdireChamps(WebDataBinder binder) {
         binder.setDisallowedFields("id", "actif");
     }
 
+    // Étudiant : matériel actif ; gestionnaire : tout le matériel
     @GetMapping
-    public String lister(Model model) {
-        model.addAttribute("materiels", materielService.lister());
+    public String liste(Model model, HttpServletRequest request) {
+        boolean gestion = request.isUserInRole("GESTIONNAIRE");
+        model.addAttribute("gestion", gestion);
+        model.addAttribute("materiels", gestion ? materielService.lister() : materielService.listerActifs());
         return "materiels/liste";
     }
 
     @GetMapping("/nouveau")
-    public String afficherFormulaireCreation(Model model) {
-        model.addAttribute("materiel", new Materiel());
-        model.addAttribute("etats", etatsManuels());
+    public String nouveau(Model model) {
+        Materiel materiel = new Materiel();
+        materiel.setEtat(EtatMateriel.DISPONIBLE);
+        materiel.setQuantite(1);
+        preparerFormulaire(model, materiel, null);
         return "materiels/formulaire";
     }
 
-    @PostMapping("/enregistrer")
-    public String creer(@Valid @ModelAttribute("materiel") Materiel materiel,
-                        BindingResult result, Model model, RedirectAttributes redirect) {
-        if (result.hasErrors()) {
-            model.addAttribute("etats", etatsManuels());
-            return "materiels/formulaire";
-        }
+    @GetMapping("/modifier")
+    public String modifier(@RequestParam Long id, Model model, RedirectAttributes redirect) {
         try {
-            materielService.creer(materiel);
-            redirect.addFlashAttribute("succes", "Matériel ajouté avec succès.");
-            return "redirect:/materiels";
-        } catch (BusinessException e) {
-            model.addAttribute("erreur", e.getMessage());
-            model.addAttribute("etats", etatsManuels());
-            return "materiels/formulaire";
-        }
-    }
-
-    @GetMapping("/{id}/modifier")
-    public String afficherFormulaireModification(@PathVariable Long id, Model model,
-                                                 RedirectAttributes redirect) {
-        try {
-            model.addAttribute("materiel", materielService.trouverParId(id));
-            model.addAttribute("materielId", id);
-            model.addAttribute("etats", etatsManuels());
+            preparerFormulaire(model, materielService.trouverParId(id), id);
             return "materiels/formulaire";
         } catch (BusinessException e) {
             redirect.addFlashAttribute("erreur", e.getMessage());
@@ -81,29 +69,35 @@ public class MaterielController {
         }
     }
 
-    @PostMapping("/{id}/modifier")
-    public String modifier(@PathVariable Long id,
-                           @Valid @ModelAttribute("materiel") Materiel materiel,
-                           BindingResult result, Model model, RedirectAttributes redirect) {
+    // id absent = création ; id présent = modification
+    @PostMapping("/enregistrer")
+    public String enregistrer(@RequestParam(required = false) Long id,
+                              @Valid @ModelAttribute("materiel") Materiel materiel,
+                              BindingResult result, Model model, RedirectAttributes redirect) {
         if (result.hasErrors()) {
             model.addAttribute("materielId", id);
-            model.addAttribute("etats", etatsManuels());
+            model.addAttribute("etats", ETATS_CHOISIS);
             return "materiels/formulaire";
         }
         try {
-            materielService.modifier(id, materiel);
-            redirect.addFlashAttribute("succes", "Matériel modifié avec succès.");
+            if (id == null) {
+                materielService.creer(materiel);
+                redirect.addFlashAttribute("succes", "Matériel ajouté.");
+            } else {
+                materielService.modifier(id, materiel);
+                redirect.addFlashAttribute("succes", "Matériel modifié.");
+            }
             return "redirect:/materiels";
         } catch (BusinessException e) {
-            model.addAttribute("materielId", id);
-            model.addAttribute("etats", etatsManuels());
             model.addAttribute("erreur", e.getMessage());
+            model.addAttribute("materielId", id);
+            model.addAttribute("etats", ETATS_CHOISIS);
             return "materiels/formulaire";
         }
     }
 
-    @PostMapping("/{id}/etat")
-    public String changerEtat(@PathVariable Long id, @RequestParam EtatMateriel etat,
+    @PostMapping("/etat")
+    public String changerEtat(@RequestParam Long id, @RequestParam EtatMateriel etat,
                               RedirectAttributes redirect) {
         try {
             materielService.changerEtat(id, etat);
@@ -114,8 +108,8 @@ public class MaterielController {
         return "redirect:/materiels";
     }
 
-    @PostMapping("/{id}/desactiver")
-    public String desactiver(@PathVariable Long id, RedirectAttributes redirect) {
+    @PostMapping("/desactiver")
+    public String desactiver(@RequestParam Long id, RedirectAttributes redirect) {
         try {
             materielService.desactiver(id);
             redirect.addFlashAttribute("succes", "Matériel désactivé.");
@@ -125,8 +119,9 @@ public class MaterielController {
         return "redirect:/materiels";
     }
 
-    // Le gestionnaire ne choisit jamais EN_PANNE : seuls les signalements de panne le font.
-    private List<EtatMateriel> etatsManuels() {
-        return List.of(EtatMateriel.DISPONIBLE, EtatMateriel.INDISPONIBLE);
+    private void preparerFormulaire(Model model, Materiel materiel, Long id) {
+        model.addAttribute("materiel", materiel);
+        model.addAttribute("materielId", id);
+        model.addAttribute("etats", ETATS_CHOISIS);
     }
 }

@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Mes réservations de salles - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2>Mes réservations de salles</h2>
+        <a class="btn btn-primary" th:href="@{/reservations-salle/disponibles}">Chercher une salle</a>
+    </div>
+
+    <div class="alert alert-success" th:if="${succes}" th:text="${succes}"></div>
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <p class="text-muted small mb-2"><span th:text="${#lists.size(reservations)}">0</span> réservation(s)</p>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Salle</th>
+            <th>Objet</th>
+            <th>Début</th>
+            <th>Fin</th>
+            <th>Statut</th>
+            <th>Décision</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="r : ${reservations}">
+            <td th:text="${r.salle.nom}"></td>
+            <td th:text="${r.objet}"></td>
+            <td th:text="${#temporals.format(r.dateDebut, 'dd/MM/yyyy HH:mm')}"></td>
+            <td th:text="${#temporals.format(r.dateFin, 'dd/MM/yyyy HH:mm')}"></td>
+            <td>
+                <span th:switch="${r.statut.name()}">
+                    <span th:case="'EN_ATTENTE'" class="badge bg-warning text-dark">En attente</span>
+                    <span th:case="'VALIDEE'" class="badge bg-success">Validée</span>
+                    <span th:case="'REFUSEE'" class="badge bg-danger">Refusée</span>
+                    <span th:case="'ANNULEE'" class="badge bg-secondary">Annulée</span>
+                </span>
+            </td>
+            <td>
+                <span th:if="${r.decideur != null}" th:text="${r.decideur.nom + ' ' + r.decideur.prenom}"></span>
+                <div class="text-muted small" th:if="${r.motif != null}" th:text="${r.motif}"></div>
+            </td>
+            <td>
+                <form class="d-inline"
+                      th:if="${(r.statut.name() == 'EN_ATTENTE' or r.statut.name() == 'VALIDEE') and r.dateDebut.isAfter(#temporals.createNow())}"
+                      th:action="@{/reservations-salle/annuler}" method="post">
+                    <input type="hidden" name="id" th:value="${r.id}"/>
+                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('Annuler cette réservation ?');">Annuler</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(reservations)}">
+            <td colspan="7" class="text-center text-muted">Aucune réservation trouvée.</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>
