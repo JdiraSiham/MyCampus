@@ -24,8 +24,8 @@ public class UtilisateurController {
     }
 
     @GetMapping("/utilisateurs")
-    public String lister(Model model) {
-        model.addAttribute("utilisateurs", utilisateurService.listerTous());
+    public String lister(@RequestParam(required = false) Role role, @RequestParam(required = false) String q, Model model) {
+        remplirListe(model, role, q);
         return "utilisateurs/liste";
     }
 
@@ -66,7 +66,7 @@ public class UtilisateurController {
             utilisateurService.desactiver(id, admin.getId());
         } catch (BusinessException e) {
             model.addAttribute("erreur", e.getMessage());
-            model.addAttribute("utilisateurs", utilisateurService.listerTous());
+            remplirListe(model, null, null);
             return "utilisateurs/liste";
         }
         return "redirect:/utilisateurs";
@@ -92,5 +92,11 @@ public class UtilisateurController {
         }
         model.addAttribute("succes", "Mot de passe modifié avec succès.");
         return "mot-de-passe";
+    }
+    
+    private void remplirListe(Model model, Role role, String q) {
+        model.addAttribute("utilisateurs", utilisateurService.rechercher(role, q));
+        model.addAttribute("roleChoisi", role);
+        model.addAttribute("recherche", q);
     }
 }

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Compte utilisateur - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h2 th:text="${utilisateur.id == null} ? 'Nouveau compte' : 'Modifier le compte'"></h2>
+
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <form th:action="@{/utilisateurs/enregistrer}" th:object="${utilisateur}"
+          method="post" class="col-md-6">
+        <input type="hidden" th:field="*{id}"/>
+
+        <div class="mb-3">
+            <label class="form-label" for="nom">Nom *</label>
+            <input type="text" class="form-control" id="nom" th:field="*{nom}" required/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="prenom">Prénom *</label>
+            <input type="text" class="form-control" id="prenom" th:field="*{prenom}" required/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="email">Email *</label>
+            <input type="email" class="form-control" id="email" th:field="*{email}" required/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="role">Rôle *</label>
+            <select class="form-select" id="role" th:field="*{role}" required>
+                <option value="">-- Choisir un rôle --</option>
+                <option th:each="r : ${roles}" th:value="${r}" th:text="${r}"></option>
+            </select>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="cne">CNE (facultatif)</label>
+            <input type="text" class="form-control" id="cne" th:field="*{cne}"/>
+        </div>
+
+        <!-- Le mot de passe n'est demandé qu'à la création -->
+        <div class="mb-3" th:if="${utilisateur.id == null}">
+            <label class="form-label" for="motDePasseClair">Mot de passe *</label>
+            <input type="password" class="form-control" id="motDePasseClair"
+                   name="motDePasseClair" required/>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a class="btn btn-secondary" th:href="@{/utilisateurs}">Annuler</a>
+    </form>
+</section>
+</body>
+</html>

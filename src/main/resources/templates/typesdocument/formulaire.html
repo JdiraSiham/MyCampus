@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Type de document - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h2 th:text="${typeDocument.id == null} ? 'Nouveau type de document' : 'Modifier le type de document'"></h2>
+
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <form th:action="@{/types-document/enregistrer}" th:object="${typeDocument}"
+          method="post" class="col-md-6">
+        <input type="hidden" th:field="*{id}"/>
+
+        <div class="mb-3">
+            <label class="form-label" for="libelle">Libellé *</label>
+            <input type="text" class="form-control" id="libelle" th:field="*{libelle}" required/>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label" for="description">Description</label>
+            <textarea class="form-control" id="description" rows="3" th:field="*{description}"></textarea>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+        <a class="btn btn-secondary" th:href="@{/types-document}">Annuler</a>
+    </form>
+</section>
+</body>
+</html>

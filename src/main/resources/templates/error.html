@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Erreur - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="text-center py-4">
+        <div class="display-1 fw-bold text-primary" th:text="${status ?: 'Erreur'}">404</div>
+
+        <p class="h4 mb-2" th:if="${status == 403}">Accès non autorisé</p>
+        <p class="h4 mb-2" th:unless="${status == 403}">Une erreur est survenue</p>
+
+        <p class="text-muted" th:if="${status == 403}">
+            Cette page n'est pas accessible avec votre profil.
+        </p>
+        <p class="text-muted" th:unless="${status == 403}">
+            La page demandée est introuvable ou l'opération n'a pas pu être effectuée.
+        </p>
+
+        <a class="btn btn-primary" th:href="@{/}">Retour à l'accueil</a>
+    </div>
+</section>
+</body>
+</html>

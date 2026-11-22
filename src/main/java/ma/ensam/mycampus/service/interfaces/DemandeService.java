@@ -14,4 +14,6 @@ public interface DemandeService {
     DemandeAdministrative prendreEnCharge(Long demandeId, Long gestionnaireId);
     DemandeAdministrative marquerPrete(Long demandeId, Long gestionnaireId);
     DemandeAdministrative rejeter(Long demandeId, Long gestionnaireId, String motif);
+    List<DemandeAdministrative> rechercherPourEtudiant(Long etudiantId, StatutDemande statut, Long typeDocumentId);
+    List<DemandeAdministrative> rechercherPourGestionnaire(Long gestionnaireId, String recherche,                                                    StatutDemande statut, Long typeDocumentId);
 }

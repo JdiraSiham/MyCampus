@@ -22,8 +22,9 @@ public class TypeDocumentController {
     }
 
     @GetMapping("/types-document")
-    public String lister(Model model) {
-        model.addAttribute("types", typeDocumentService.listerTous());
+    public String lister(@RequestParam(required = false) String q, Model model) {
+        model.addAttribute("types", typeDocumentService.rechercher(q));
+        model.addAttribute("recherche", q);
         return "typesdocument/liste";
     }
 

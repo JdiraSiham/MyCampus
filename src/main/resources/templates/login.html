@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Connexion - MyCampus</title>
+    <link rel="stylesheet" th:href="@{/webjars/bootstrap/5.3.3/css/bootstrap.min.css}"/>
+    <link rel="stylesheet" th:href="@{/css/style.css}"/>
+</head>
+<body class="login-page">
+<div class="login-wrapper">
+
+    <!-- Volet gauche : présentation -->
+    <div class="login-side">
+        <div class="brand">
+            <span class="brand-mark">M</span>
+            <span class="brand-name">MyCampus</span>
+        </div>
+        <h1>Les services de votre école, au même endroit.</h1>
+        <p>Demandes de documents administratifs, réservations de matériel et de salles :
+            simple, rapide et suivi en ligne.</p>
+        <p class="small">École Nationale Supérieure d'Arts et Métiers &ndash; Casablanca</p>
+    </div>
+
+    <!-- Volet droit : formulaire -->
+    <div class="login-main">
+        <div class="login-box">
+            <h2>Connexion</h2>
+            <p class="text-muted mb-4">Connectez-vous avec votre adresse e-mail.</p>
+
+            <div class="alert alert-danger" th:if="${param.error}">
+                E-mail ou mot de passe incorrect, ou compte désactivé.
+            </div>
+            <div class="alert alert-success" th:if="${param.logout}">
+                Vous avez été déconnecté(e).
+            </div>
+
+            <form th:action="@{/login}" method="post">
+                <div class="mb-3">
+                    <label class="form-label" for="username">Adresse e-mail</label>
+                    <input type="email" class="form-control" id="username" name="username"
+                           autofocus required/>
+                </div>
+                <div class="mb-4">
+                    <label class="form-label" for="password">Mot de passe</label>
+                    <input type="password" class="form-control" id="password" name="password" required/>
+                </div>
+                <button type="submit" class="btn btn-primary w-100 py-2">Se connecter</button>
+            </form>
+
+
+        </div>
+    </div>
+
+</div>
+</body>
+</html>

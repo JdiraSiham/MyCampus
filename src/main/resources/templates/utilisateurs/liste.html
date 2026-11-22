@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Utilisateurs - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2>Utilisateurs</h2>
+        <a class="btn btn-primary" th:href="@{/utilisateurs/nouveau}">Nouveau compte</a>
+    </div>
+
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <!-- Sections par rôle -->
+    <ul class="nav nav-pills mb-3">
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${roleChoisi == null} ? 'active'"
+               th:href="@{/utilisateurs(q=${recherche})}">Tous</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${roleChoisi?.name() == 'ADMIN'} ? 'active'"
+               th:href="@{/utilisateurs(role='ADMIN', q=${recherche})}">Administrateurs</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${roleChoisi?.name() == 'GESTIONNAIRE'} ? 'active'"
+               th:href="@{/utilisateurs(role='GESTIONNAIRE', q=${recherche})}">Gestionnaires</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" th:classappend="${roleChoisi?.name() == 'ETUDIANT'} ? 'active'"
+               th:href="@{/utilisateurs(role='ETUDIANT', q=${recherche})}">Étudiants</a>
+        </li>
+    </ul>
+
+    <!-- Recherche par nom ou prénom (la section choisie est conservée) -->
+    <form class="row g-2 mb-3" th:action="@{/utilisateurs}" method="get">
+        <input type="hidden" name="role" th:if="${roleChoisi != null}" th:value="${roleChoisi}"/>
+        <div class="col-md-6 col-lg-5">
+            <input type="search" class="form-control" name="q" th:value="${recherche}"
+                   placeholder="Rechercher par nom ou prénom"/>
+        </div>
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">Rechercher</button>
+            <a class="btn btn-secondary" th:unless="${#strings.isEmpty(recherche)}"
+               th:href="@{/utilisateurs(role=${roleChoisi})}">Effacer</a>
+        </div>
+    </form>
+
+    <p class="text-muted small mb-2"><span th:text="${#lists.size(utilisateurs)}">0</span> utilisateur(s)</p>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Nom</th>
+            <th>Prénom</th>
+            <th>Email</th>
+            <th>Rôle</th>
+            <th>CNE</th>
+            <th>Statut</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="u : ${utilisateurs}">
+            <td th:text="${u.nom}"></td>
+            <td th:text="${u.prenom}"></td>
+            <td th:text="${u.email}"></td>
+            <td>
+                <span class="badge bg-info text-dark" th:switch="${u.role.name()}">
+                    <span th:case="'ADMIN'">Administrateur</span>
+                    <span th:case="'GESTIONNAIRE'">Gestionnaire</span>
+                    <span th:case="'ETUDIANT'">Étudiant</span>
+                </span>
+            </td>
+            <td th:text="${u.cne}"></td>
+            <td>
+                <span class="badge bg-success" th:if="${u.actif}">Actif</span>
+                <span class="badge bg-secondary" th:unless="${u.actif}">Inactif</span>
+            </td>
+            <td>
+                <a class="btn btn-sm btn-outline-primary"
+                   th:href="@{/utilisateurs/modifier(id=${u.id})}">Modifier</a>
+                <form class="d-inline" th:if="${u.actif}"
+                      th:action="@{/utilisateurs/desactiver}" method="post">
+                    <input type="hidden" name="id" th:value="${u.id}"/>
+                    <button type="submit" class="btn btn-sm btn-outline-danger"
+                            onclick="return confirm('Désactiver ce compte ?');">Désactiver</button>
+                </form>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(utilisateurs)}">
+            <td colspan="7" class="text-center text-muted">Aucun utilisateur trouvé.</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>

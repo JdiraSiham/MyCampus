@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Nouvelle demande - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <h2>Nouvelle demande de document</h2>
+
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <div class="alert alert-warning" th:if="${#lists.isEmpty(types)}">
+        Aucun type de document n'est disponible pour le moment.
+    </div>
+
+    <form th:action="@{/demandes/deposer}" method="post" class="col-md-6"
+          th:unless="${#lists.isEmpty(types)}">
+        <div class="mb-3">
+            <label class="form-label" for="typeDocumentId">Type de document *</label>
+            <select class="form-select" id="typeDocumentId" name="typeDocumentId" required>
+                <option value="">-- Choisir un document --</option>
+                <option th:each="t : ${types}" th:value="${t.id}" th:text="${t.libelle}"></option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn btn-primary">Déposer la demande</button>
+        <a class="btn btn-secondary" th:href="@{/demandes}">Annuler</a>
+    </form>
+</section>
+</body>
+</html>
