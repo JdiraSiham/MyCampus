@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import ma.ensam.mycampus.dao.entities.enums.StatutSignalement;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
@@ -30,6 +31,16 @@ public class SignalementPanne {
     @Column(nullable = false, updatable = false)
     private LocalDateTime dateSignalement;
 
+    // Décision du gestionnaire sur la panne signalée
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private StatutSignalement statut = StatutSignalement.EN_ATTENTE;
+
+    private LocalDateTime dateDecision;
+
+    private String motifRefus;
+
+    // Clôture de la panne (une fois le matériel réparé)
     @Column(nullable = false)
     private boolean resolu = false;
 
@@ -42,6 +53,11 @@ public class SignalementPanne {
     @ManyToOne(optional = false)
     @JoinColumn(name = "auteur_id", nullable = false)
     private Utilisateur auteur;
+
+    // Gestionnaire qui a validé ou refusé
+    @ManyToOne
+    @JoinColumn(name = "decideur_id")
+    private Utilisateur decideur;
 
     @ManyToOne
     @JoinColumn(name = "resolu_par_id")

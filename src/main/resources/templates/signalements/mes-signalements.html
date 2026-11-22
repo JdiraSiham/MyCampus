@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{template}">
+<head>
+    <title>Mes signalements - MyCampus</title>
+</head>
+<body>
+<section layout:fragment="content">
+    <div class="d-flex justify-content-between align-items-center">
+        <h2>Mes signalements de panne</h2>
+        <a class="btn btn-primary" th:href="@{/signalements/nouveau}">Signaler une panne</a>
+    </div>
+
+    <div class="alert alert-success" th:if="${succes}" th:text="${succes}"></div>
+    <div class="alert alert-danger" th:if="${erreur}" th:text="${erreur}"></div>
+
+    <p class="text-muted small mb-2"><span th:text="${#lists.size(signalements)}">0</span> signalement(s)</p>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th>Matériel</th>
+            <th>Description</th>
+            <th>Date</th>
+            <th>Statut</th>
+            <th>Décision</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="s : ${signalements}">
+            <td th:text="${s.materiel.nom}"></td>
+            <td th:text="${s.description}"></td>
+            <td th:text="${#temporals.format(s.dateSignalement, 'dd/MM/yyyy HH:mm')}"></td>
+            <td>
+                <span th:switch="${s.statut.name()}">
+                    <span th:case="'EN_ATTENTE'" class="badge bg-warning text-dark">En attente</span>
+                    <span th:case="'VALIDEE'">
+                        <span class="badge bg-success" th:if="${s.resolu}">Résolue</span>
+                        <span class="badge bg-primary" th:unless="${s.resolu}">Validée</span>
+                    </span>
+                    <span th:case="'REFUSEE'" class="badge bg-danger">Refusée</span>
+                </span>
+            </td>
+            <td>
+                <span th:if="${s.decideur != null}" th:text="${s.decideur.nom + ' ' + s.decideur.prenom}"></span>
+                <div class="text-muted small" th:if="${s.motifRefus != null}" th:text="${s.motifRefus}"></div>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(signalements)}">
+            <td colspan="5" class="text-center text-muted">Vous n'avez signalé aucune panne.</td>
+        </tr>
+        </tbody>
+    </table>
+</section>
+</body>
+</html>

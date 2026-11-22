@@ -57,7 +57,8 @@ public class SecurityConfig {
                                 "/reservations-materiel/reserver", "/reservations-materiel/annuler",
                                 "/reservations-salle/mes-reservations", "/reservations-salle/disponibles",
                                 "/reservations-salle/nouvelle", "/reservations-salle/reserver",
-                                "/reservations-salle/annuler")
+                                "/reservations-salle/annuler",
+                                "/signalements/mes-signalements")
                         .hasRole("ETUDIANT")
 
                         // --- ETUDIANT et GESTIONNAIRE (consultation, signalement) ---

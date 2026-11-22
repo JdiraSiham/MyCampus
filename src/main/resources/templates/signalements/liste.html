@@ -17,9 +17,11 @@
 
     <form class="row g-2 mb-3" method="get" th:action="@{/signalements}">
         <div class="col-md-6 col-lg-3">
-            <select class="form-select" name="nonResolus">
-                <option value="">Tous les signalements</option>
-                <option value="true" th:selected="${nonResolus}">En cours seulement</option>
+            <select class="form-select" name="statut">
+                <option value="">Tous les statuts</option>
+                <option value="EN_ATTENTE" th:selected="${statutChoisi?.name() == 'EN_ATTENTE'}">En attente</option>
+                <option value="VALIDEE" th:selected="${statutChoisi?.name() == 'VALIDEE'}">Validée</option>
+                <option value="REFUSEE" th:selected="${statutChoisi?.name() == 'REFUSEE'}">Refusée</option>
             </select>
         </div>
         <div class="col-auto">
@@ -38,7 +40,7 @@
             <th>Signalé par</th>
             <th>Date</th>
             <th>Statut</th>
-            <th>Résolution</th>
+            <th>Décision</th>
             <th>Actions</th>
         </tr>
         </thead>
@@ -49,16 +51,41 @@
             <td th:text="${s.auteur.nom + ' ' + s.auteur.prenom}"></td>
             <td th:text="${#temporals.format(s.dateSignalement, 'dd/MM/yyyy HH:mm')}"></td>
             <td>
-                <span class="badge bg-success" th:if="${s.resolu}">Résolu</span>
-                <span class="badge bg-warning text-dark" th:unless="${s.resolu}">En cours</span>
+                <span th:switch="${s.statut.name()}">
+                    <span th:case="'EN_ATTENTE'" class="badge bg-warning text-dark">En attente</span>
+                    <span th:case="'VALIDEE'">
+                        <span class="badge bg-success" th:if="${s.resolu}">Résolue</span>
+                        <span class="badge bg-primary" th:unless="${s.resolu}">Validée</span>
+                    </span>
+                    <span th:case="'REFUSEE'" class="badge bg-danger">Refusée</span>
+                </span>
             </td>
             <td>
-                <span th:if="${s.resoluPar != null}" th:text="${s.resoluPar.nom + ' ' + s.resoluPar.prenom}"></span>
-                <div class="text-muted small" th:if="${s.dateResolution != null}"
-                     th:text="${#temporals.format(s.dateResolution, 'dd/MM/yyyy HH:mm')}"></div>
+                <span th:if="${s.decideur != null}" th:text="${s.decideur.nom + ' ' + s.decideur.prenom}"></span>
+                <div class="text-muted small" th:if="${s.motifRefus != null}" th:text="${s.motifRefus}"></div>
+                <div class="text-muted small" th:if="${s.resoluPar != null}"
+                     th:text="'Clôturée par ' + ${s.resoluPar.nom} + ' ' + ${s.resoluPar.prenom}"></div>
             </td>
             <td>
-                <form class="d-inline" th:unless="${s.resolu}"
+                <!-- Demande d'étudiant à traiter -->
+                <th:block th:if="${s.statut.name() == 'EN_ATTENTE'}">
+                    <form class="d-inline" th:action="@{/signalements/valider}" method="post">
+                        <input type="hidden" name="id" th:value="${s.id}"/>
+                        <button type="submit" class="btn btn-sm btn-primary"
+                                onclick="return confirm('Valider cette panne ? Le matériel passera en panne et ses réservations à venir seront annulées.');">Valider</button>
+                    </form>
+                    <form class="d-flex gap-1 mt-1" th:action="@{/signalements/refuser}" method="post">
+                        <input type="hidden" name="id" th:value="${s.id}"/>
+                        <input type="text" class="form-control form-control-sm" name="motif"
+                               placeholder="Motif du refus *" required/>
+                        <button type="submit" class="btn btn-sm btn-outline-danger"
+                                onclick="return confirm('Refuser ce signalement ?');">Refuser</button>
+                    </form>
+                </th:block>
+
+                <!-- Panne confirmée, matériel réparé : clôture -->
+                <form class="d-inline"
+                      th:if="${s.statut.name() == 'VALIDEE' and !s.resolu}"
                       th:action="@{/signalements/cloturer}" method="post">
                     <input type="hidden" name="id" th:value="${s.id}"/>
                     <button type="submit" class="btn btn-sm btn-primary"
